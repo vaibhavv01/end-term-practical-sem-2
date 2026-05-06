@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Name Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --accent: #e8c97e;
+      --accent-dim: rgba(232, 201, 126, 0.12);
+      --text: #f0ece4;
+      --text-muted: #6b6760;
+      --glow: rgba(232, 201, 126, 0.25);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(232,201,126,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,201,126,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3rem 3.5rem;
+      width: min(480px, 92vw);
+      border-radius: 2px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 120px rgba(0,0,0,0.3);
+      animation: fadeUp 0.6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Gold top bar */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .input-wrap {
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+
+    input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 0.65rem 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.3s;
+      caret-color: var(--accent);
+    }
+
+    input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    /* Animated underline glow on focus */
+    .input-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%;
+      width: 0; height: 1px;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--glow);
+      transition: width 0.4s ease, left 0.4s ease;
+    }
+
+    input:focus ~ .underline-glow,
+    .input-wrap:focus-within::after {
+      width: 100%;
+      left: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .output-section .label {
+      margin-bottom: 1rem;
+    }
+
+    .name-display {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      font-weight: 700;
+      min-height: 3.8rem;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+      transition: opacity 0.2s;
+      word-break: break-word;
+    }
+
+    .name-display.empty {
+      color: var(--border);
+      font-weight: 400;
+      font-size: 1.4rem;
+      font-style: italic;
+      opacity: 0.6;
+    }
+
+    .char-count {
+      margin-top: 1.2rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .char-count span {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="input-wrap">
+      <p class="label">Enter your name</p>
+      <input
+        type="text"
+        id="nameInput"
+        placeholder="Type here…"
+        maxlength="60"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <hr class="divider" />
+
+    <div class="output-section">
+      <p class="label">Live preview</p>
+      <div class="name-display empty" id="nameDisplay">Waiting for input…</div>
+      <p class="char-count" id="charCount">— / 60 characters</p>
+    </div>
+  </div>
+
+  <script>
+    const input   = document.getElementById('nameInput');
+    const display = document.getElementById('nameDisplay');
+    const count   = document.getElementById('charCount');
+
+    input.addEventListener('input', () => {
+      const val = input.value;
+
+      if (val.trim() === '') {
+        display.textContent = 'Waiting for input…';
+        display.classList.add('empty');
+        count.innerHTML = `— / 60 characters`;
+      } else {
+        display.textContent = val;
+        display.classList.remove('empty');
+        count.innerHTML = `<span>${val.length}</span> / 60 characters`;
+      }
+    });
+  </script>
+
+</body>
+</html>
